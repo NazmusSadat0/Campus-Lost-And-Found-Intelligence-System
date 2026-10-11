@@ -91,6 +91,18 @@ Replace the directory name with your actual cloned folder name if it differs.
 ```bash
 make
 ```
+### 4. Run the application
+
+On Linux or macOS:
+
+make run
+
+Alternatively:
+``` bash
+./campus_lost_found
+```
+
+On Windows, the executable may be named campus_lost_found.exe, depending on your build environment. Run it from your terminal using the appropriate executable command.
 
 This command compiles the source files and links the object files into the `campus_lost_found` executable.
 ## Using the Application
