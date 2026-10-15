@@ -31,6 +31,7 @@ const char *locations[LOCATION_COUNT] = {
  * Removes whitespace from the beginning and end.
  * Returns 0 when input ends.
  */
+
 int readText(const char *prompt, char *output, size_t size) {
     char line[512];
 
@@ -49,7 +50,6 @@ int readText(const char *prompt, char *output, size_t size) {
 
         if (!strchr(line, '\n') && !feof(stdin)) {
             while ((ch = getchar()) != '\n' && ch != EOF) {
-                /* Discard the rest of an oversized line. */
             }
 
             puts("Input too long. Please try again.");
@@ -192,6 +192,7 @@ int equalText(const char *a, const char *b) {
 }
 
 /* Searches text without ASCII case differences. */
+
 int containsText(const char *text, const char *query) {
     char lowerText[200];
     char lowerQuery[200];
