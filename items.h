@@ -6,13 +6,14 @@
 #define MAX_ITEMS 500
 #define CATEGORY_COUNT 6
 #define LOCATION_COUNT 7
-#define DATA_FILE "items.dat"
+#define DATA_FILE "items.txt"
 
 #define LOST 1
 #define FOUND 2
 
 #define OPEN 1
 #define RESOLVED 2
+#define BLACKLISTED 3
 
 typedef struct {
     int id;
@@ -36,29 +37,22 @@ extern const char *locations[LOCATION_COUNT];
 int readText(const char *prompt, char *output, size_t size);
 int readNumber(const char *prompt, int min, int max, int *result);
 int validDate(const char *date);
+int validString(const char *s, size_t size);
 int validItem(const Item *item);
+int chooseOption(const char *title, const char *options[], int count, int *out);
 
 /* String processing */
 int equalText(const char *a, const char *b);
 int containsText(const char *text, const char *query);
 
-/* Item operations */
+/* Core item operations */
 int findIndex(const Item items[], int count, int id);
+int selectIndex(const Item items[], int count);
+const char *statusLabel(int status);
 void showItem(const Item *item);
-void displayItems(const Item items[], int count);
-void searchItems(const Item items[], int count);
-
+void displayItems(const Item items[], int count, int isAdmin);
+void searchItems(const Item items[], int count, int isAdmin);
 int addItem(Item items[], int *count, int type);
-int updateItem(Item items[], int count);
-int deleteItem(Item items[], int *count);
 int recordReturn(Item items[], int count);
-
-/* Matching */
-int calculateMatchScore(const Item *a, const Item *b);
-void findMatches(const Item items[], int count);
-
-/* File handling */
-int saveItems(const char *path, const Item items[], int count);
-int loadItems(const char *path, Item items[], int *count);
 
 #endif

@@ -2,36 +2,43 @@
 
 #include <stdio.h>
 
-int calculateMatchScore(const Item *a, const Item *b) {
+int calculateMatchScore(const Item *a, const Item *b)
+{
     int score = 0;
 
     /* Only compare open reports of opposite types. */
     if (a->type == b->type ||
         a->status != OPEN ||
-        b->status != OPEN) {
+        b->status != OPEN)
+    {
         return 0;
     }
 
-    if (a->category == b->category) {
+    if (a->category == b->category)
+    {
         score += 40;
     }
 
-    if (equalText(a->name, b->name)) {
+    if (equalText(a->name, b->name))
+    {
         score += 30;
     }
 
-    if (equalText(a->colour, b->colour)) {
+    if (equalText(a->colour, b->colour))
+    {
         score += 15;
     }
 
-    if (a->location == b->location) {
+    if (a->location == b->location)
+    {
         score += 15;
     }
 
     return score;
 }
 
-void findMatches(const Item items[], int count) {
+void findMatches(const Item items[], int count)
+{
     int id;
     int index;
     int matches = 0;
@@ -43,29 +50,33 @@ void findMatches(const Item items[], int count) {
             "Report ID to match: ",
             1000,
             9999,
-            &id
-        )) {
+            &id))
+    {
         return;
     }
 
     index = findIndex(items, count, id);
 
-    if (index < 0) {
+    if (index < 0)
+    {
         puts("Report not found.");
         return;
     }
 
     const Item *target = &items[index];
 
-    if (target->status != OPEN) {
+    if (target->status != OPEN)
+    {
         puts("Only open reports can be matched.");
         return;
     }
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         int score = calculateMatchScore(target, &items[i]);
 
-        if (score >= 55) {
+        if (score >= 55)
+        {
             indices[matches] = i;
             scores[matches] = score;
             matches++;
@@ -76,12 +87,14 @@ void findMatches(const Item items[], int count) {
      * Insertion sort in descending score order.
      * The original item array stays unchanged.
      */
-    for (int i = 1; i < matches; i++) {
+    for (int i = 1; i < matches; i++)
+    {
         int score = scores[i];
         int itemIndex = indices[i];
         int j = i - 1;
 
-        while (j >= 0 && scores[j] < score) {
+        while (j >= 0 && scores[j] < score)
+        {
             scores[j + 1] = scores[j];
             indices[j + 1] = indices[j];
             j--;
@@ -93,10 +106,10 @@ void findMatches(const Item items[], int count) {
 
     printf(
         "%d possible match(es), minimum score 55/100.\n",
-        matches
-    );
+        matches);
 
-    for (int i = 0; i < matches; i++) {
+    for (int i = 0; i < matches; i++)
+    {
         const Item *p = &items[indices[i]];
 
         showItem(p);
@@ -104,19 +117,23 @@ void findMatches(const Item items[], int count) {
         printf("Match score: %d/100\n", scores[i]);
         printf("Matched fields:");
 
-        if (target->category == p->category) {
+        if (target->category == p->category)
+        {
             printf(" category");
         }
 
-        if (equalText(target->name, p->name)) {
+        if (equalText(target->name, p->name))
+        {
             printf(" name");
         }
 
-        if (equalText(target->colour, p->colour)) {
+        if (equalText(target->colour, p->colour))
+        {
             printf(" colour");
         }
 
-        if (target->location == p->location) {
+        if (target->location == p->location)
+        {
             printf(" location");
         }
 
@@ -125,6 +142,5 @@ void findMatches(const Item items[], int count) {
 
     puts(
         "Scores rank similar details; "
-        "they are not ownership proof or probabilities."
-    );
+        "they are not ownership proof or probabilities.");
 }
