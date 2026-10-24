@@ -15,14 +15,15 @@ int calculateMatchScore(const Item *a, const Item *b)
 
     if (a->category == b->category)
     {
-        score += 40;
+        score += 30;
     }
     if (equalText(a->name, b->name) || containsText(a->name, b->name) ||
         containsText(b->name, a->name))
     {
-        score += 30;
+        score += 25;
     }
-    if (equalText(a->colour, b->colour))
+    if (equalText(a->colour, b->colour) || containsText(a->colour, b->colour) ||
+        containsText(b->colour, a->colour))
     {
         score += 15;
     }
@@ -30,37 +31,27 @@ int calculateMatchScore(const Item *a, const Item *b)
     {
         score += 15;
     }
+    if (equalText(a->date, b->date) ||
+        containsText(a->description, b->description) ||
+        containsText(b->description, a->description))
+    {
+        score += 15;
+    }
 
     return score;
 }
 
-void findMatches(const Item items[], int count)
+static void printRankedMatches(
+    const Item items[],
+    int count,
+    const Item *queryItem)
 {
-    int id, index, matches = 0;
+    int matches = 0;
     MatchResult *results = NULL;
-
-    if (!readNumber("Report ID to match: ", 1000, 9999, &id))
-    {
-        return;
-    }
-
-    index = findIndex(items, count, id);
-    if (index < 0 || items[index].status == BLACKLISTED)
-    {
-        puts("Report not found.");
-        return;
-    }
-
-    const Item *target = &items[index];
-    if (target->status != OPEN)
-    {
-        puts("Only open reports can be matched.");
-        return;
-    }
 
     if (count <= 0)
     {
-        puts("No other reports available.");
+        puts("No reports available in the system.");
         return;
     }
 
@@ -74,8 +65,8 @@ void findMatches(const Item items[], int count)
 
     for (int i = 0; i < count; i++)
     {
-        int score = calculateMatchScore(target, &items[i]);
-        if (score >= 55)
+        int score = calculateMatchScore(queryItem, &items[i]);
+        if (score >= 50)
         {
             results[matches].itemIndex = i;
             results[matches].score = score;
@@ -96,27 +87,102 @@ void findMatches(const Item items[], int count)
         results[j + 1] = key;
     }
 
-    printf("%d possible match(es), minimum score 55/100.\n", matches);
+    printf("\nResult: %d possible match(es) found (minimum score 50/100).\n", matches);
 
     for (int i = 0; i < matches; i++)
     {
         const Item *p = &items[results[i].itemIndex];
+        int s = results[i].score;
         showItem(p);
-        printf("Match score: %d/100\n", results[i].score);
-        printf("Matched fields:");
-        if (target->category == p->category)
-            printf(" category");
-        if (equalText(target->name, p->name) ||
-            containsText(target->name, p->name) ||
-            containsText(p->name, target->name))
-            printf(" name");
-        if (equalText(target->colour, p->colour))
-            printf(" colour");
-        if (target->location == p->location)
-            printf(" location");
+        printf("Your Score: %d/100 (%s)\n",
+               s, s >= 75 ? "Strong Ownership/Match Confidence" : "Partial Match");
+        printf("Matched Answers:");
+        if (queryItem->category == p->category)
+            printf(" [Category +30]");
+        if (equalText(queryItem->name, p->name) ||
+            containsText(queryItem->name, p->name) ||
+            containsText(p->name, queryItem->name))
+            printf(" [Name +25]");
+        if (equalText(queryItem->colour, p->colour) ||
+            containsText(queryItem->colour, p->colour) ||
+            containsText(p->colour, queryItem->colour))
+            printf(" [Colour +15]");
+        if (queryItem->location == p->location)
+            printf(" [Location +15]");
+        if (equalText(queryItem->date, p->date) ||
+            containsText(queryItem->description, p->description) ||
+            containsText(p->description, queryItem->description))
+        {
+            printf(" [Description/Date Clue +15]");
+        }
         puts("");
     }
 
-    puts("Scores rank similar details; they are not ownership proof.");
     free(results);
+}
+
+void findMatches(const Item items[], int count)
+{
+    int mode;
+    puts("\n--- INTELLIGENT MATCHING & QUESTIONNAIRE ---");
+    puts("1. Answer Questions to Find / Verify an Item (Scored out of 100)");
+    puts("2. Match Using an Existing Report ID");
+
+    if (!readNumber("Choice: ", 1, 2, &mode))
+    {
+        return;
+    }
+
+    if (mode == 1)
+    {
+        Item answer = {0};
+        int searchFor;
+
+        puts("\nAnswer the following 6 questions to calculate your match score:");
+        if (!readNumber(
+                "Q1. Did you (1) Lose an item [search Found list] or "
+                "(2) Find an item [search Lost list]? ",
+                1, 2, &searchFor))
+        {
+            return;
+        }
+        answer.type = (searchFor == 1) ? LOST : FOUND;
+        answer.status = OPEN;
+
+        if (!chooseOption("Q2. Select item category (+30 pts):",
+                          categories, CATEGORY_COUNT, &answer.category) ||
+            !readText("Q3. What is the item name? (+25 pts): ",
+                      answer.name, sizeof answer.name) ||
+            !readText("Q4. What colour is the item? (+15 pts): ",
+                      answer.colour, sizeof answer.colour) ||
+            !chooseOption("Q5. Where was it lost/found? (+15 pts):",
+                          locations, LOCATION_COUNT, &answer.location) ||
+            !readText("Q6. Enter a specific clue/detail (e.g. case, roll, tag) (+15 pts): ",
+                      answer.description, sizeof answer.description))
+        {
+            return;
+        }
+
+        printRankedMatches(items, count, &answer);
+        return;
+    }
+
+    int id, index;
+    if (!readNumber("Report ID to match: ", 1000, 9999, &id))
+    {
+        return;
+    }
+    index = findIndex(items, count, id);
+    if (index < 0 || items[index].status == BLACKLISTED)
+    {
+        puts("Report not found.");
+        return;
+    }
+    if (items[index].status != OPEN)
+    {
+        puts("Only open reports can be matched.");
+        return;
+    }
+
+    printRankedMatches(items, count, &items[index]);
 }

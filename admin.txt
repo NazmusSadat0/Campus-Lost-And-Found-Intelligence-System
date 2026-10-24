@@ -1,0 +1,14 @@
+12
+weapon
+gun
+pistol
+rifle
+knife
+dagger
+bomb
+explosive
+drugs
+narcotics
+alcohol
+contraband
+0

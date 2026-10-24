@@ -9,6 +9,8 @@
 #include <string.h>
 #include <time.h>
 
+#define RED "\033[1;31m"
+
 static void syncChanges(const Item items[], int count, const AdminData *admin, int *dirty)
 {
     if (!*dirty)
@@ -90,7 +92,7 @@ static void runAdminPanel(Item items[], int *count, AdminData *admin, int *dirty
     int choice;
     do
     {
-        puts("\n--- ADMIN PANEL ---");
+        puts("\n\033[1;33m--- ADMIN PANEL ---\033[0m");
         puts("1. Display All Reports (Including Blacklisted)");
         puts("2. Search All Reports");
         puts("3. Update Report");
@@ -151,6 +153,7 @@ int main(void)
     static AdminData admin;
     int count = 0, choice, dirty = 0;
 
+    system("");
     srand((unsigned int)time(NULL));
 
     if (!loadItems(DATA_FILE, items, &count))
@@ -163,9 +166,9 @@ int main(void)
 
     do
     {
-        puts("\n==========================================");
-        puts("  CAMPUS LOST & FOUND INTELLIGENCE SYSTEM ");
-        puts("==========================================");
+        puts("\n\033[1;36m==========================================\033[0m");
+        puts("\033[1;36m  CAMPUS LOST & FOUND INTELLIGENCE SYSTEM \033[0m");
+        puts("\033[1;36m==========================================\033[0m");
         puts("1. Student Panel");
         puts("2. Admin Panel");
         puts("0. Save and Exit");

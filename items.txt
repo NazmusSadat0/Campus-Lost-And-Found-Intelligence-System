@@ -1,36 +1,78 @@
-5
-8372 1 1 3 2
-siam
-blue
-2026-06-30
-it is scratched
-nazmus
+11
+1010 1 1 3 1
+iPhone 13
+Black
+2026-10-15
+Lost near cafeteria counter has clear case
+Tanvir Ahmed
+01711000111
+2020 2 1 3 1
+iPhone 13
+Black
+2026-10-15
+Found on cafeteria table 4 with clear case
+Siam Hossain
+01811000222
+3030 1 2 1 1
+Student ID Card
+Blue
+2026-10-16
+ID card roll 52507013 inside plastic badge
+Nazmus Sakib
+01911000333
+4040 2 2 1 1
+Student ID Card
+Blue
+2026-10-16
+Found on 2nd floor library reading desk
+Sadat Rahman
+01611000444
+5050 1 3 2 1
+Calculus Book
+Red
+2026-10-14
+Thomas Calculus 14th edition spine is taped
+Rakibul Islam
+01511000555
+6060 2 4 6 1
+Dorm Room Keys
+Silver
+2026-10-17
+Ring with two silver keys and green tag
+Security Gate 1
+01311000666
+7070 1 5 4 2
+Winter Jacket
+Navy Blue
+2026-10-10
+Handed back to owner after room verification
+Fahim Chowdhury
+01712000777
+8080 2 5 4 2
+Winter Jacket
+Navy Blue
+2026-10-10
+Returned to Fahim in dorm room 302
+Hall Supervisor
+01812000888
+9090 1 6 5 3
+Hunting Pocket Knife
+Silver
+2026-10-18
+Confiscated prohibited item flagged for admin
+Karim Ullah
+01912000999
+9595 2 6 7 1
+Sports Water Bottle
+Green
+2026-10-19
+Left behind near campus gym bench
+Mahmud Hasan
+01612000000
+4461 1 6 4 3
+gun
+black
+2026-10-10
+medium sized
+Sadat
 01613974734
-1837 2 1 3 2
-earpods
-white
-2026-10-30
-white color and scratched
-sadat
-01613974734
-6049 1 3 6 1
-book
-red
-2005-07-24
-It was torn in the middle
-siam
-0123456789
-5442 1 3 4 1
-book
-blue
-2026-07-12
-it is so old
-Rakib
-0123456789
-9233 1 3 1 1
-book
-red
-2026-07-26
-kwek
-sadat
-08122334

@@ -16,9 +16,13 @@ void initDefaultAdminData(AdminData *admin)
     const char *defaults[] = {
         "weapon", "gun", "pistol", "rifle", "knife", "dagger",
         "bomb", "explosive", "drugs", "narcotics", "alcohol", "contraband"};
+
     int n = (int)(sizeof(defaults) / sizeof(defaults[0]));
+
     memset(admin, 0, sizeof(*admin));
+
     admin->kwCount = n;
+
     for (int i = 0; i < n; i++)
     {
         strcpy(admin->keywords[i], defaults[i]);
@@ -30,6 +34,7 @@ const char *detectBlacklistedKeyword(const Item *item)
 {
     if (!activeAdmin)
         return NULL;
+
     for (int i = 0; i < activeAdmin->kwCount; i++)
     {
         if (containsText(item->name, activeAdmin->keywords[i]) ||
@@ -44,14 +49,19 @@ const char *detectBlacklistedKeyword(const Item *item)
 int updateItem(Item items[], int count, const AdminData *admin)
 {
     int index = selectIndex(items, count), field;
+
     if (index < 0)
         return 0;
+
     Item copy = items[index];
     showItem(&copy);
+
     puts("1. Name  2. Category  3. Colour  4. Location  5. Date");
     puts("6. Description  7. Reporter  8. Contact  9. Status  10. Type");
+
     if (!readNumber("Field: ", 1, 10, &field))
         return 0;
+        
     switch (field)
     {
     case 1:
