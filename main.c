@@ -9,8 +9,6 @@
 #include <string.h>
 #include <time.h>
 
-#define RED "\033[1;31m"
-
 static void syncChanges(const Item items[], int count, const AdminData *admin, int *dirty)
 {
     if (!*dirty)
@@ -31,17 +29,15 @@ static void runStudentPanel(Item items[], int *count, AdminData *admin, int *dir
     int choice;
     do
     {
-        puts("\n--- STUDENT PANEL ---");
+        puts("\n\033[1;32m--- STUDENT PANEL ---\033[0m");
         puts("1. Report Lost Item");
         puts("2. Report Found Item");
-        puts("3. Display Public Reports");
-        puts("4. Search Reports");
-        puts("5. Find Possible Matches");
-        puts("6. Claim / Record Item Return");
-        puts("7. Submit Fraud Allegation / Suspicious Claim");
+        puts("3. Find Possible Matches (Question & Score Quiz)");
+        puts("4. Claim / Record Item Return");
+        puts("5. Submit Fraud Allegation / Suspicious Claim");
         puts("0. Back to Main Menu");
 
-        if (!readNumber("Choice: ", 0, 7, &choice))
+        if (!readNumber("Choice: ", 0, 5, &choice))
             choice = 0;
         int changed = 0;
 
@@ -54,18 +50,12 @@ static void runStudentPanel(Item items[], int *count, AdminData *admin, int *dir
             changed = addItem(items, count, FOUND);
             break;
         case 3:
-            displayItems(items, *count, 0);
+            changed = findMatches(items, *count);
             break;
         case 4:
-            searchItems(items, *count, 0);
+            changed = claimItemByQuestions(items, *count);
             break;
         case 5:
-            findMatches(items, *count);
-            break;
-        case 6:
-            changed = recordReturn(items, *count);
-            break;
-        case 7:
             changed = submitFraudAllegation(items, *count, admin);
             break;
         case 0:
@@ -92,7 +82,7 @@ static void runAdminPanel(Item items[], int *count, AdminData *admin, int *dirty
     int choice;
     do
     {
-        puts("\n\033[1;33m--- ADMIN PANEL ---\033[0m");
+        puts("\n\033[1;31m--- ADMIN PANEL ---\033[0m");
         puts("1. Display All Reports (Including Blacklisted)");
         puts("2. Search All Reports");
         puts("3. Update Report");
@@ -153,7 +143,6 @@ int main(void)
     static AdminData admin;
     int count = 0, choice, dirty = 0;
 
-    system("");
     srand((unsigned int)time(NULL));
 
     if (!loadItems(DATA_FILE, items, &count))

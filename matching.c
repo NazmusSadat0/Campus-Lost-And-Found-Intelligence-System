@@ -41,18 +41,111 @@ int calculateMatchScore(const Item *a, const Item *b)
     return score;
 }
 
-static void printRankedMatches(
-    const Item items[],
-    int count,
-    const Item *queryItem)
+static int askVerificationQuestions(Item *answer)
 {
+    int searchFor;
+
+    puts("\nAnswer these 6 verification questions (Minimum 60/100 required to claim):");
+    if (!readNumber(
+            "Q1. Did you (1) Lose an item [check Found items] or "
+            "(2) Find an item [check Lost items]? ",
+            1, 2, &searchFor))
+    {
+        return 0;
+    }
+    answer->type = (searchFor == 1) ? LOST : FOUND;
+    answer->status = OPEN;
+
+    if (!chooseOption("Q2. Select item category (+30 pts):",
+                      categories, CATEGORY_COUNT, &answer->category) ||
+        !readText("Q3. What is the item name? (+25 pts): ",
+                  answer->name, sizeof answer->name) ||
+        !readText("Q4. What colour is the item? (+15 pts): ",
+                  answer->colour, sizeof answer->colour) ||
+        !chooseOption("Q5. Where was it lost/found? (+15 pts):",
+                      locations, LOCATION_COUNT, &answer->location) ||
+        !readText("Q6. Enter a specific clue/detail (e.g. case, roll, tag) (+15 pts): ",
+                  answer->description, sizeof answer->description))
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int completeClaimStep(
+    Item items[],
+    int count,
+    const MatchResult results[],
+    int matches)
+{
+    int chosenIndex = -1;
+    int yes;
+
+    puts("\n--- PROCEEDING DIRECTLY TO CLAIM / HANDOVER ---");
+    if (matches == 1)
+    {
+        chosenIndex = results[0].itemIndex;
+        printf("Matched Report #%d (%s) selected for claim.\n",
+               items[chosenIndex].id, items[chosenIndex].name);
+    }
+    else
+    {
+        int id;
+        if (!readNumber("Enter the matched Report ID from above to claim (0 to cancel): ",
+                        0, 9999, &id) ||
+            id == 0)
+        {
+            puts("Claim skipped.");
+            return 0;
+        }
+        for (int i = 0; i < matches; i++)
+        {
+            if (items[results[i].itemIndex].id == id)
+            {
+                chosenIndex = results[i].itemIndex;
+                break;
+            }
+        }
+        if (chosenIndex < 0)
+        {
+            puts("You can only claim a Report ID that passed your verification quiz.");
+            return 0;
+        }
+    }
+
+    if (!readNumber("Confirm claiming and resolving this item now? (1 Yes, 0 No): ",
+                    0, 1, &yes) ||
+        !yes)
+    {
+        puts("Claim cancelled.");
+        return 0;
+    }
+
+    items[chosenIndex].status = RESOLVED;
+    printf("Success! Report #%d (%s) has been claimed and marked as Resolved.\n",
+           items[chosenIndex].id, items[chosenIndex].name);
+    (void)count;
+    return 1;
+}
+
+int findMatches(Item items[], int count)
+{
+    Item answer = {0};
     int matches = 0;
+    int claimed = 0;
     MatchResult *results = NULL;
 
+    puts("\n--- INTELLIGENT QUESTIONNAIRE & MATCH SCORING ---");
     if (count <= 0)
     {
         puts("No reports available in the system.");
-        return;
+        return 0;
+    }
+
+    if (!askVerificationQuestions(&answer))
+    {
+        return 0;
     }
 
     /* Dynamic memory allocation (malloc) for storing candidate matches */
@@ -60,13 +153,13 @@ static void printRankedMatches(
     if (!results)
     {
         fprintf(stderr, "Memory allocation failed for match results.\n");
-        return;
+        return 0;
     }
 
     for (int i = 0; i < count; i++)
     {
-        int score = calculateMatchScore(queryItem, &items[i]);
-        if (score >= 50)
+        int score = calculateMatchScore(&answer, &items[i]);
+        if (score >= MIN_CLAIM_SCORE)
         {
             results[matches].itemIndex = i;
             results[matches].score = score;
@@ -87,102 +180,53 @@ static void printRankedMatches(
         results[j + 1] = key;
     }
 
-    printf("\nResult: %d possible match(es) found (minimum score 50/100).\n", matches);
+    if (matches == 0)
+    {
+        puts("\nResult: 0 qualifying matches found (Minimum 60/100 required).");
+        puts("Your answers did not reach the verification threshold to view or claim an item.");
+        free(results);
+        return 0;
+    }
+
+    printf("\nVerified! %d matching report(s) scored >= %d/100:\n",
+           matches, MIN_CLAIM_SCORE);
 
     for (int i = 0; i < matches; i++)
     {
         const Item *p = &items[results[i].itemIndex];
         int s = results[i].score;
         showItem(p);
-        printf("Your Score: %d/100 (%s)\n",
-               s, s >= 75 ? "Strong Ownership/Match Confidence" : "Partial Match");
+        printf("Your Score: %d/100 (Qualified to Claim)\n", s);
         printf("Matched Answers:");
-        if (queryItem->category == p->category)
+        if (answer.category == p->category)
             printf(" [Category +30]");
-        if (equalText(queryItem->name, p->name) ||
-            containsText(queryItem->name, p->name) ||
-            containsText(p->name, queryItem->name))
+        if (equalText(answer.name, p->name) ||
+            containsText(answer.name, p->name) ||
+            containsText(p->name, answer.name))
             printf(" [Name +25]");
-        if (equalText(queryItem->colour, p->colour) ||
-            containsText(queryItem->colour, p->colour) ||
-            containsText(p->colour, queryItem->colour))
+        if (equalText(answer.colour, p->colour) ||
+            containsText(answer.colour, p->colour) ||
+            containsText(p->colour, answer.colour))
             printf(" [Colour +15]");
-        if (queryItem->location == p->location)
+        if (answer.location == p->location)
             printf(" [Location +15]");
-        if (equalText(queryItem->date, p->date) ||
-            containsText(queryItem->description, p->description) ||
-            containsText(p->description, queryItem->description))
+        if (equalText(answer.date, p->date) ||
+            containsText(answer.description, p->description) ||
+            containsText(p->description, answer.description))
         {
-            printf(" [Description/Date Clue +15]");
+            printf(" [Clue +15]");
         }
         puts("");
     }
 
+    claimed = completeClaimStep(items, count, results, matches);
     free(results);
+    return claimed;
 }
 
-void findMatches(const Item items[], int count)
+int claimItemByQuestions(Item items[], int count)
 {
-    int mode;
-    puts("\n--- INTELLIGENT MATCHING & QUESTIONNAIRE ---");
-    puts("1. Answer Questions to Find / Verify an Item (Scored out of 100)");
-    puts("2. Match Using an Existing Report ID");
-
-    if (!readNumber("Choice: ", 1, 2, &mode))
-    {
-        return;
-    }
-
-    if (mode == 1)
-    {
-        Item answer = {0};
-        int searchFor;
-
-        puts("\nAnswer the following 6 questions to calculate your match score:");
-        if (!readNumber(
-                "Q1. Did you (1) Lose an item [search Found list] or "
-                "(2) Find an item [search Lost list]? ",
-                1, 2, &searchFor))
-        {
-            return;
-        }
-        answer.type = (searchFor == 1) ? LOST : FOUND;
-        answer.status = OPEN;
-
-        if (!chooseOption("Q2. Select item category (+30 pts):",
-                          categories, CATEGORY_COUNT, &answer.category) ||
-            !readText("Q3. What is the item name? (+25 pts): ",
-                      answer.name, sizeof answer.name) ||
-            !readText("Q4. What colour is the item? (+15 pts): ",
-                      answer.colour, sizeof answer.colour) ||
-            !chooseOption("Q5. Where was it lost/found? (+15 pts):",
-                          locations, LOCATION_COUNT, &answer.location) ||
-            !readText("Q6. Enter a specific clue/detail (e.g. case, roll, tag) (+15 pts): ",
-                      answer.description, sizeof answer.description))
-        {
-            return;
-        }
-
-        printRankedMatches(items, count, &answer);
-        return;
-    }
-
-    int id, index;
-    if (!readNumber("Report ID to match: ", 1000, 9999, &id))
-    {
-        return;
-    }
-    index = findIndex(items, count, id);
-    if (index < 0 || items[index].status == BLACKLISTED)
-    {
-        puts("Report not found.");
-        return;
-    }
-    if (items[index].status != OPEN)
-    {
-        puts("Only open reports can be matched.");
-        return;
-    }
-
-    printRankedMatches(items, count, &items[index]);
+    puts("\n--- DIRECT ITEM CLAIM (OWNERSHIP VERIFICATION REQUIRED) ---");
+    puts("To prevent false claims, answer the verification questions first:");
+    return findMatches(items, count);
 }
