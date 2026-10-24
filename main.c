@@ -29,7 +29,9 @@ static void runStudentPanel(Item items[], int *count, AdminData *admin, int *dir
     int choice;
     do
     {
-        puts("\n\033[1;32m--- STUDENT PANEL ---\033[0m");
+        puts("\n\033[1;32m=====================\033[0m");
+        puts("\033[1;32m--- STUDENT PANEL ---\033[0m");
+        puts("\033[1;32m=====================\033[0m");
         puts("1. Report Lost Item");
         puts("2. Report Found Item");
         puts("3. Find Possible Matches (Question & Score Quiz)");
@@ -82,7 +84,9 @@ static void runAdminPanel(Item items[], int *count, AdminData *admin, int *dirty
     int choice;
     do
     {
-        puts("\n\033[1;31m--- ADMIN PANEL ---\033[0m");
+        puts("\n\033[1;31m===================\033[0m");
+        puts("\033[1;31m--- ADMIN PANEL ---\033[0m");
+        puts("\033[1;31m===================\033[0m");
         puts("1. Display All Reports (Including Blacklisted)");
         puts("2. Search All Reports");
         puts("3. Update Report");
