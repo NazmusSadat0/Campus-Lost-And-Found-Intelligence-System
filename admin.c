@@ -16,13 +16,9 @@ void initDefaultAdminData(AdminData *admin)
     const char *defaults[] = {
         "weapon", "gun", "pistol", "rifle", "knife", "dagger",
         "bomb", "explosive", "drugs", "narcotics", "alcohol", "contraband"};
-
     int n = (int)(sizeof(defaults) / sizeof(defaults[0]));
-
     memset(admin, 0, sizeof(*admin));
-
     admin->kwCount = n;
-
     for (int i = 0; i < n; i++)
     {
         strcpy(admin->keywords[i], defaults[i]);
@@ -34,7 +30,6 @@ const char *detectBlacklistedKeyword(const Item *item)
 {
     if (!activeAdmin)
         return NULL;
-
     for (int i = 0; i < activeAdmin->kwCount; i++)
     {
         if (containsText(item->name, activeAdmin->keywords[i]) ||
@@ -49,19 +44,14 @@ const char *detectBlacklistedKeyword(const Item *item)
 int updateItem(Item items[], int count, const AdminData *admin)
 {
     int index = selectIndex(items, count), field;
-
     if (index < 0)
         return 0;
-
     Item copy = items[index];
     showItem(&copy);
-
     puts("1. Name  2. Category  3. Colour  4. Location  5. Date");
     puts("6. Description  7. Reporter  8. Contact  9. Status  10. Type");
-
     if (!readNumber("Field: ", 1, 10, &field))
         return 0;
-        
     switch (field)
     {
     case 1:
@@ -242,21 +232,64 @@ int manageBlacklist(AdminData *admin, Item items[], int count)
 int submitFraudAllegation(const Item items[], int count, AdminData *admin)
 {
     FraudReport fr = {0};
-    int index;
+    Item q = {0};
+    int bestIdx = -1, bestScore = 0;
+
     if (admin->fraudCount >= MAX_FRAUDS)
     {
         puts("Fraud allegation storage is full.");
         return 0;
     }
-    index = selectIndex(items, count);
-    if (index < 0 || items[index].status == BLACKLISTED)
+
+    puts("\n--- SUBMIT FRAUD ALLEGATION (VERIFY DISPUTED ITEM) ---");
+    puts("Answer these questions about the item you suspect was falsely claimed:");
+    if (!chooseOption("1. Disputed item category:", categories, CATEGORY_COUNT, &q.category) ||
+        !readText("2. Disputed item name: ", q.name, sizeof q.name) ||
+        !readText("3. Disputed item colour: ", q.colour, sizeof q.colour) ||
+        !chooseOption("4. Where was it lost/found?", locations, LOCATION_COUNT, &q.location) ||
+        !readText("5. Specific ownership clue/detail: ", q.description, sizeof q.description))
     {
-        puts("Valid public report not found.");
         return 0;
     }
-    showItem(&items[index]);
-    fr.itemId = items[index].id;
+
+    for (int i = 0; i < count; i++)
+    {
+        const Item *p = &items[i];
+        int s = 0;
+        if (p->status == BLACKLISTED)
+            continue;
+        if (p->category == q.category)
+            s += 30;
+        if (equalText(p->name, q.name) || containsText(p->name, q.name) ||
+            containsText(q.name, p->name))
+            s += 25;
+        if (equalText(p->colour, q.colour) || containsText(p->colour, q.colour) ||
+            containsText(q.colour, p->colour))
+            s += 15;
+        if (p->location == q.location)
+            s += 15;
+        if (containsText(p->description, q.description) ||
+            containsText(q.description, p->description))
+            s += 15;
+        if (s > bestScore || (s == bestScore && p->status == RESOLVED))
+        {
+            bestScore = s;
+            bestIdx = i;
+        }
+    }
+
+    if (bestIdx < 0 || bestScore < 60)
+    {
+        puts("No matching item found (minimum 60/100 match required to file an allegation).");
+        return 0;
+    }
+
+    printf("Matched disputed item (%d/100): %s (%s, Status: %s)\n",
+           bestScore, items[bestIdx].name, categories[items[bestIdx].category - 1],
+           statusLabel(items[bestIdx].status));
+    fr.itemId = items[bestIdx].id;
     fr.status = FRAUD_PENDING;
+
     if (!readText("Suspected false claimant / user name: ", fr.suspectName, sizeof fr.suspectName) ||
         !readText("Your name: ", fr.accuserName, sizeof fr.accuserName) ||
         !readText("Your contact: ", fr.accuserContact, sizeof fr.accuserContact))
